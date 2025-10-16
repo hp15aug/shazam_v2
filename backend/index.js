@@ -21,17 +21,15 @@ const upload = multer({ storage: storage });
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-
 if (!supabaseUrl || !supabaseKey) {
   console.error(
     "❌ Error: SUPABASE_URL and SUPABASE_KEY must be set in environment variables"
   );
   process.exit(1);
 }
-
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Constants from Java implementation
+//Constants
 const UPPER_LIMIT = 300;
 const LOWER_LIMIT = 40;
 const RANGE = [40, 80, 120, 180, UPPER_LIMIT + 1];
@@ -45,7 +43,7 @@ function getIndex(freq) {
   return i;
 }
 
-// Hash function from Java implementation
+// Hash function
 function hash(p1, p2, p3, p4) {
   return (
     (p4 - (p4 % FUZ_FACTOR)) * 100000000 +
@@ -330,12 +328,15 @@ app.post("/api/identify", upload.single("audio"), async (req, res) => {
 
     // Convert audio to PCM
     const pcmData = await convertAudioToPCM(req.file.buffer);
+    console.log(" PCM DATA : " + pcmData);
 
     // Generate spectrum
     const results = makeSpectrum(pcmData);
+    console.log(" Spectrum :" + results);
 
     // Match against database
     const { matchMap } = await determineKeyPoints(results, -1, true);
+    console.log(" Match Map :" + matchMap);
 
     if (matchMap.size === 0) {
       return res.json({
