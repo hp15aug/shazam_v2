@@ -21,17 +21,15 @@ const upload = multer({ storage: storage });
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-
 if (!supabaseUrl || !supabaseKey) {
   console.error(
     "❌ Error: SUPABASE_URL and SUPABASE_KEY must be set in environment variables"
   );
   process.exit(1);
 }
-
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Constants from Java implementation
+//Constants
 const UPPER_LIMIT = 300;
 const LOWER_LIMIT = 40;
 const RANGE = [40, 80, 120, 180, UPPER_LIMIT + 1];
@@ -41,15 +39,11 @@ const CHUNK_SIZE = 4096;
 // Helper function to get frequency range index
 function getIndex(freq) {
   let i = 0;
-  // Added bounds checking to prevent out-of-bounds access
-  while (i < RANGE.length - 1 && RANGE[i] < freq) {
-    i++;
-  }
-  // Clamp to valid range
-  return Math.min(i, RANGE.length - 1);
+  while (RANGE[i] < freq) i++;
+  return i;
 }
 
-// Hash function from Java implementation
+// Hash function
 function hash(p1, p2, p3, p4) {
   return (
     (p4 - (p4 % FUZ_FACTOR)) * 100000000 +
@@ -86,17 +80,8 @@ async function convertAudioToPCM(audioBuffer) {
         console.log(`ffmpeg: ${data}`);
       });
 
-      ffmpeg.on("error", (err) => {
-        reject(new Error(`ffmpeg process error: ${err.message}`));
-      });
-
       ffmpeg.on("close", async (code) => {
         if (code !== 0) {
-          // Clean up temp files on error
-          try {
-            await unlink(tempInputPath).catch(() => {});
-            await unlink(tempOutputPath).catch(() => {});
-          } catch {}
           reject(new Error(`ffmpeg exited with code ${code}`));
           return;
         }
@@ -107,16 +92,11 @@ async function convertAudioToPCM(audioBuffer) {
           await unlink(tempOutputPath);
           resolve(Buffer.from(pcmData));
         } catch (err) {
-          // Clean up on read error
-          await unlink(tempInputPath).catch(() => {});
-          await unlink(tempOutputPath).catch(() => {});
           reject(err);
         }
       });
     });
   } catch (err) {
-    // Clean up on initial write error
-    await unlink(tempInputPath).catch(() => {});
     throw err;
   }
 }
@@ -126,12 +106,6 @@ function makeSpectrum(audioBuffer) {
   const audio = new Int8Array(audioBuffer);
   const totalSize = audio.length;
   const amountPossible = Math.floor(totalSize / CHUNK_SIZE);
-
-  // Return early if not enough data
-  if (amountPossible === 0) {
-    console.warn("Audio buffer too small for analysis");
-    return [];
-  }
 
   const results = [];
   const fft = new FFT(CHUNK_SIZE);
@@ -171,11 +145,7 @@ async function determineKeyPoints(results, songId, isMatching) {
     const keyPoints = [0, 0, 0, 0, 0];
 
     // Find highest magnitude in each frequency range
-    // Fixed: include UPPER_LIMIT in the range
-    for (let freq = LOWER_LIMIT; freq < UPPER_LIMIT; freq++) {
-      // Ensure we don't go out of bounds of the magnitudes array
-      if (freq >= results[t].length) break;
-
+    for (let freq = LOWER_LIMIT; freq < UPPER_LIMIT - 1; freq++) {
       const mag = Math.log(results[t][freq] + 1);
       const index = getIndex(freq);
 
@@ -185,7 +155,6 @@ async function determineKeyPoints(results, songId, isMatching) {
       }
     }
 
-    // Use only the first 4 frequency bands for hashing (5th band is for higher frequencies but not used in hash)
     const h = hash(keyPoints[0], keyPoints[1], keyPoints[2], keyPoints[3]);
 
     if (isMatching) {
@@ -199,8 +168,7 @@ async function determineKeyPoints(results, songId, isMatching) {
         console.error("Error querying fingerprints:", error);
       } else if (fingerprints && fingerprints.length > 0) {
         for (const dataPoint of fingerprints) {
-          // Fixed: calculate time difference, not absolute value (to preserve temporal alignment)
-          const offset = dataPoint.time - t;
+          const offset = Math.abs(dataPoint.time - t);
 
           if (!matchMap.has(dataPoint.song_id)) {
             matchMap.set(dataPoint.song_id, new Map());
@@ -223,11 +191,6 @@ async function determineKeyPoints(results, songId, isMatching) {
 
 // Store fingerprints in database (batch insert)
 async function storeFingerprintsInDB(fingerprints) {
-  if (fingerprints.length === 0) {
-    console.log("No fingerprints to store");
-    return;
-  }
-
   const batchSize = 1000;
   const totalBatches = Math.ceil(fingerprints.length / batchSize);
 
