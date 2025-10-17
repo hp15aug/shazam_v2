@@ -53,7 +53,9 @@ const AudioCapture = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/stats");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stats`
+      );
       const data = await response.json();
       setStats(data);
     } catch (err) {
@@ -64,7 +66,9 @@ const AudioCapture = () => {
   const fetchSongs = async () => {
     setLoadingSongs(true);
     try {
-      const response = await fetch("http://localhost:4000/api/songs");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/songs`
+      );
       const data = await response.json();
       setSongs(data.songs || []);
     } catch (err) {
@@ -79,7 +83,7 @@ const AudioCapture = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:4000/api/songs/${songId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/songs/${songId}`,
         {
           method: "DELETE",
         }
@@ -139,10 +143,13 @@ const AudioCapture = () => {
 
     try {
       if (mode === "identify") {
-        const response = await fetch("http://localhost:4000/api/identify", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/identify`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
         const data = await response.json();
         setResult(data);
         setError(null);
@@ -155,10 +162,13 @@ const AudioCapture = () => {
         formData.append("name", songName);
         formData.append("artist", artistName || "Unknown");
 
-        const response = await fetch("http://localhost:4000/api/add-song", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/add-song`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
         const data = await response.json();
         setResult(data);
         setSongName("");
