@@ -21,15 +21,17 @@ const upload = multer({ storage: storage });
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
+
 if (!supabaseUrl || !supabaseKey) {
   console.error(
     "❌ Error: SUPABASE_URL and SUPABASE_KEY must be set in environment variables"
   );
   process.exit(1);
 }
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-//Constants
+// Constants from Java implementation
 const UPPER_LIMIT = 300;
 const LOWER_LIMIT = 40;
 const RANGE = [40, 80, 120, 180, UPPER_LIMIT + 1];
@@ -43,7 +45,7 @@ function getIndex(freq) {
   return i;
 }
 
-// Hash function
+// Hash function from Java implementation
 function hash(p1, p2, p3, p4) {
   return (
     (p4 - (p4 % FUZ_FACTOR)) * 100000000 +
