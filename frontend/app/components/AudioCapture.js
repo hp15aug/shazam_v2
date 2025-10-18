@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ModeToggle } from "./ModeToggle";
 import { IdentifyView } from "./IdentifyView";
 import { AddSongView } from "./AddSongView";
 import { ResultCard } from "./ResultCard";
+import { LibraryButton } from "./LibraryButton";
+import { SongLibraryModal } from "./SongLibraryModal";
 import { AlertTriangle, X } from "lucide-react";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
 // Main component orchestrating the UI
 const AudioCapture = () => {
@@ -15,15 +20,44 @@ const AudioCapture = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
+  const [stats, setStats] = useState({ song_count: 0 });
+  const [library, setLibrary] = useState([]);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+
+  useEffect(() => {
+    fetchLibraryData();
+  }, []);
+
+  const fetchLibraryData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/songs`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch library data");
+      }
+      const data = await response.json();
+
+      // Correctly set the library from `data.songs` and stats from `data.count`
+      setLibrary(data.songs || []);
+      setStats({ song_count: data.count || 0 });
+    } catch (err) {
+      console.error("Error fetching library data:", err);
+      setLibrary([]); // Fallback to an empty array on error
+      setError("Could not connect to the library database.");
+    }
+  };
 
   // Resets state when switching modes or clearing results
   const resetState = () => {
     setResult(null);
     setError(null);
     setStatus("idle");
-    if (mediaRecorderRef.current && status === "recording") {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
       mediaRecorderRef.current.stream
         .getTracks()
         .forEach((track) => track.stop());
@@ -89,7 +123,7 @@ const AudioCapture = () => {
     try {
       let endpoint = "";
       if (mode === "identify") {
-        endpoint = "http://localhost:4000/api/identify";
+        endpoint = `${API_BASE_URL}/api/identify`;
       } else {
         if (!metadata.songName) {
           setError("Song name is required.");
@@ -98,7 +132,7 @@ const AudioCapture = () => {
         }
         formData.append("name", metadata.songName);
         formData.append("artist", metadata.artistName || "Unknown Artist");
-        endpoint = "http://localhost:4000/api/add-song";
+        endpoint = `${API_BASE_URL}/api/add-song`;
       }
 
       const response = await fetch(endpoint, {
@@ -108,8 +142,13 @@ const AudioCapture = () => {
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}`);
       }
+
       const data = await response.json();
       setResult(data);
+
+      if (mode === "add" && data.success) {
+        await fetchLibraryData();
+      }
     } catch (err) {
       setError(
         "Failed to process audio. Please ensure the backend server is running."
@@ -120,8 +159,32 @@ const AudioCapture = () => {
     }
   };
 
+  const handleDeleteSong = async (songId) => {
+    const originalLibrary = [...library];
+    setLibrary(library.filter((song) => song.id !== songId));
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/songs/${songId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete the song.");
+      }
+      // Update the count locally for better performance
+      setStats((prevStats) => ({ song_count: prevStats.song_count - 1 }));
+    } catch (err) {
+      console.error("Error deleting song:", err);
+      setLibrary(originalLibrary);
+      setError("Could not delete the song. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#121212] text-gray-200 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
+      <LibraryButton
+        songCount={stats.song_count}
+        onClick={() => setIsLibraryOpen(true)}
+      />
       <main className="w-full max-w-md mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
@@ -197,6 +260,16 @@ const AudioCapture = () => {
           </AnimatePresence>
         </div>
       </main>
+
+      <AnimatePresence>
+        {isLibraryOpen && (
+          <SongLibraryModal
+            songs={library}
+            onClose={() => setIsLibraryOpen(false)}
+            onDelete={handleDeleteSong}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
