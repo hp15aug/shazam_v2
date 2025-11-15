@@ -8,10 +8,11 @@ import { AddSongView } from "./AddSongView";
 import { ResultCard } from "./ResultCard";
 import { LibraryButton } from "./LibraryButton";
 import { SongLibraryModal } from "./SongLibraryModal";
+import LogConsole from "./LogConsole";
 import { AlertTriangle, X } from "lucide-react";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+import { API_BASE_URL } from "../lib/config";
+import Footer from "./Footer";
 
 // Main component orchestrating the UI
 const AudioCapture = () => {
@@ -188,7 +189,7 @@ const AudioCapture = () => {
       <main className="w-full max-w-md mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Audio Recognition
+            Apollo Music Identifier
           </h1>
           <p className="text-gray-400 mt-2">
             Identify music playing around you or add a new song to our library.
@@ -259,6 +260,10 @@ const AudioCapture = () => {
             )}
           </AnimatePresence>
         </div>
+
+        <div className="mt-8">
+          <LogConsole />
+        </div>
       </main>
 
       <AnimatePresence>
@@ -270,6 +275,8 @@ const AudioCapture = () => {
           />
         )}
       </AnimatePresence>
+
+      <Footer />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { convertAudioToPCM } from "./addSongs/pcm.js";
 import { generateFingerprints } from "./addSongs/generateFingerprints.js";
 import { storeFingerprintsInDB } from "./addSongs/storeFIngerprints.js";
 import { matchAudio } from "./identifySongs/matchAudio.js";
+import { logStream } from "./utils/logStream.js";
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,33 @@ const HOP_SIZE = 4096; // NO overlap - reduces frames by 2x
 const LOWER_LIMIT = 300; // Start above bass rumble
 const UPPER_LIMIT = 5000; // Capture vocals, melody, harmonics
 
+// ============================================================================
+// LOG STREAM (Server-Sent Events)
+// ============================================================================
+app.get("/api/logs/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const sendEvent = (entry) => {
+    res.write(`data: ${JSON.stringify(entry)}\n\n`);
+  };
+
+  logStream.history().forEach(sendEvent);
+
+  logStream.on("log", sendEvent);
+
+  const heartbeat = setInterval(() => {
+    res.write(`:heartbeat\n\n`);
+  }, 30000);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    logStream.off("log", sendEvent);
+    res.end();
+  });
+});
+
 app.post("/api/add-song", upload.single("audio"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No audio file was uploaded." });
@@ -38,6 +66,8 @@ app.post("/api/add-song", upload.single("audio"), async (req, res) => {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`🎵 Adding song: "${name}" by ${artist}`);
     console.log(`${"=".repeat(60)}`);
+
+    // Insert song metadata
     const { data: songData, error: songError } = await supabase
       .from("songs")
       .insert([

@@ -15,7 +15,7 @@ const MATCHING_CONFIG = {
   MIN_OFFSET_CONSISTENCY: 0.6, // Min fraction of matches near dominant offset
 
   // Scoring weights (must sum to 1.0)
-  WEIGHT_MATCH_COUNT: 0.25, // Weight for raw match count
+  WEIGHT_MATCH_COUNT: 0.35, // Weight for raw match count
   WEIGHT_OFFSET_CLUSTERING: 0.3, // Weight for offset consistency
   WEIGHT_TEMPORAL_COHERENCE: 0.25, // Weight for temporal pattern
   WEIGHT_STATISTICAL_SIGNIFICANCE: 0.1, // Weight for statistical tests
@@ -23,10 +23,10 @@ const MATCHING_CONFIG = {
   // Advanced filtering
   ENABLE_TEMPORAL_FILTERING: true, // Enable temporal coherence checking
   ENABLE_OUTLIER_REMOVAL: true, // Remove statistical outliers
-  OUTLIER_THRESHOLD: 2.0, // Z-score threshold for outliers
+  OUTLIER_THRESHOLD: 2.5, // Z-score threshold for outliers
 
   // Performance vs accuracy tradeoff
-  MAX_CANDIDATES_TO_ANALYZE: 50, // Max songs to deeply analyze (higher = slower but more accurate)
+  MAX_CANDIDATES_TO_ANALYZE: 20, // Max songs to deeply analyze (higher = slower but more accurate)
   QUICK_REJECT_THRESHOLD: 5, // Quickly reject songs with fewer matches than this
 };
 
