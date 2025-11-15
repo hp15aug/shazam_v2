@@ -186,7 +186,7 @@ export const SongLibraryModal = ({ songs, onClose, onDelete }) => {
                 Your Library is Empty
               </h3>
               <p className="text-sm mt-1">
-                Add songs using the "Add Song" tab.
+                Add songs using the &quot;Add Song&quot; tab.
               </p>
             </div>
           )}
