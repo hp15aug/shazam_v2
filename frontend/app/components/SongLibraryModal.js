@@ -175,7 +175,7 @@ export const SongLibraryModal = ({ songs, onClose, onDelete }) => {
               </AnimatePresence>
               {searchTerm && filteredSongs.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
-                  <p>No songs match "{searchTerm}"</p>
+                  <p>No songs match &quot;{searchTerm}&quot;</p>
                 </div>
               )}
             </div>
