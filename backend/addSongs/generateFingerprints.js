@@ -119,29 +119,26 @@ function performEnhancedFFT(audioBuffer, windowSize = WINDOW_SIZE) {
 }
 
 /**
- * Multi-scale FFT analysis for robustness
+ * Perform FFT at multiple scales (window sizes)
  */
 function performMultiScaleFFT(audioBuffer) {
-  const spectrograms = [];
+  const results = [];
 
   // Primary scale
-  spectrograms.push({
+  results.push({
     scale: WINDOW_SIZE,
     data: performEnhancedFFT(audioBuffer, WINDOW_SIZE),
   });
 
-  // Additional scales if enabled
-  if (ENABLE_MULTI_SCALE) {
-    for (const windowSize of ADDITIONAL_WINDOW_SIZES) {
-      const hopSize = Math.floor(windowSize / 4); // 75% overlap for all scales
-      spectrograms.push({
-        scale: windowSize,
-        data: performEnhancedFFT(audioBuffer, windowSize),
-      });
-    }
+  // Additional scales
+  for (const size of ADDITIONAL_WINDOW_SIZES) {
+    results.push({
+      scale: size,
+      data: performEnhancedFFT(audioBuffer, size),
+    });
   }
 
-  return spectrograms;
+  return results;
 }
 
 /**
@@ -252,9 +249,11 @@ function findSpectralPeaks(magnitudes, windowSize = WINDOW_SIZE) {
 function extractSpectralPeaks(spectrograms) {
   const allPeaks = [];
 
-  // Use primary spectrogram (largest window)
-  const primarySpectro =
-    spectrograms.find((s) => s.scale === WINDOW_SIZE) || spectrograms[0];
+  // Use primary spectrogram (largest window) for main timeline
+  // But we could fuse peaks from multiple scales here if we wanted to be fancy
+  // For now, we'll just process the primary scale for simplicity in the timeline structure
+  // and maybe use other scales for feature augmentation later
+  const primarySpectro = spectrograms[0];
 
   for (let frameIdx = 0; frameIdx < primarySpectro.data.length; frameIdx++) {
     const peaks = findSpectralPeaks(
@@ -275,53 +274,42 @@ function extractSpectralPeaks(spectrograms) {
 }
 
 /**
- * Enhanced hash with quantization for robustness
- */
-function hashConstellation(anchorFreq, targetFreq, timeDelta) {
-  // Quantize frequencies for robustness to small variations
-  const f1 = Math.floor(anchorFreq / FREQ_QUANTIZATION) * FREQ_QUANTIZATION;
-  const f2 = Math.floor(targetFreq / FREQ_QUANTIZATION) * FREQ_QUANTIZATION;
-
-  // Quantize time delta for temporal robustness
-  const t = Math.floor(timeDelta / TIME_QUANTIZATION) * TIME_QUANTIZATION;
-
-  return `${f1}:${f2}:${t}`;
-}
-
-/**
- * Create multiple hash variants for robustness
+ * Create robust hashes by fuzzing the values
  */
 function createRobustHashes(anchorFreq, targetFreq, timeDelta) {
   const hashes = [];
 
-  // Primary hash
-  hashes.push(hashConstellation(anchorFreq, targetFreq, timeDelta));
+  // Base quantization
+  const f1 = Math.floor(anchorFreq / FREQ_QUANTIZATION);
+  const f2 = Math.floor(targetFreq / FREQ_QUANTIZATION);
+  const t = Math.floor(timeDelta / TIME_QUANTIZATION);
 
-  // Create nearby variants for robustness (helps with noise/distortion)
-  const freqVariations = [-FREQ_QUANTIZATION, 0, FREQ_QUANTIZATION];
-  const timeVariations = [-TIME_QUANTIZATION, 0, TIME_QUANTIZATION];
+  // Generate main hash
+  hashes.push(`${f1 * FREQ_QUANTIZATION}:${f2 * FREQ_QUANTIZATION}:${t * TIME_QUANTIZATION}`);
 
-  for (const fVar of freqVariations) {
-    for (const tVar of timeVariations) {
-      if (fVar === 0 && tVar === 0) continue; // Skip primary (already added)
+  // Generate fuzzy variants for robustness (neighbors in freq/time)
+  // This increases database size but significantly improves match rate in noise
+  const variants = [
+    [0, 0, 1], // Time shift +1
+    [0, 0, -1], // Time shift -1
+    [0, 1, 0], // Freq2 shift +1
+    [0, -1, 0], // Freq2 shift -1
+    [1, 0, 0], // Freq1 shift +1
+    [-1, 0, 0], // Freq1 shift -1
+  ];
 
-      const variantHash = hashConstellation(
-        anchorFreq + fVar,
-        targetFreq + fVar,
-        timeDelta + tVar
-      );
-
-      if (!hashes.includes(variantHash)) {
-        hashes.push(variantHash);
-      }
-    }
+  for (const [df1, df2, dt] of variants) {
+    hashes.push(
+      `${(f1 + df1) * FREQ_QUANTIZATION}:${(f2 + df2) * FREQ_QUANTIZATION}:${(t + dt) * TIME_QUANTIZATION
+      }`
+    );
   }
 
   return hashes;
 }
 
 /**
- * Enhanced constellation map with intelligent pairing
+ * Enhanced constellation map with intelligent pairing and robust hashing
  */
 function createConstellationMap(spectralPeaks) {
   const fingerprints = [];
@@ -377,21 +365,6 @@ function createConstellationMap(spectralPeaks) {
 
       // Create fingerprints from top pairs
       for (const pair of topPairs) {
-        // Generate primary hash
-        const primaryHash = hashConstellation(
-          anchorPeak.freq,
-          pair.targetPeak.freq,
-          pair.timeDelta
-        );
-
-        if (!hashSet.has(primaryHash)) {
-          fingerprints.push({
-            hash: primaryHash,
-            anchorTime: anchorTime,
-          });
-          hashSet.add(primaryHash);
-        }
-
         // Generate robust variant hashes for noise tolerance
         const variantHashes = createRobustHashes(
           anchorPeak.freq,
@@ -399,14 +372,13 @@ function createConstellationMap(spectralPeaks) {
           pair.timeDelta
         );
 
-        for (const variantHash of variantHashes) {
-          if (!hashSet.has(variantHash)) {
+        for (const hash of variantHashes) {
+          if (!hashSet.has(hash)) {
             fingerprints.push({
-              hash: variantHash,
+              hash: hash,
               anchorTime: anchorTime,
-              isVariant: true,
             });
-            hashSet.add(variantHash);
+            hashSet.add(hash);
           }
         }
       }
@@ -431,7 +403,7 @@ export async function generateFingerprints(audioBuffer, sampleRate) {
   const normalized = normalizeAudio(new Int8Array(audioBuffer));
 
   // 2. Multi-scale FFT analysis
-  console.log("2. Performing enhanced FFT with windowing and overlap...");
+  console.log("2. Performing multi-scale FFT analysis...");
   const spectrograms = ENABLE_MULTI_SCALE
     ? performMultiScaleFFT(normalized)
     : [{ scale: WINDOW_SIZE, data: performEnhancedFFT(normalized) }];
@@ -441,7 +413,7 @@ export async function generateFingerprints(audioBuffer, sampleRate) {
   const spectralPeaks = extractSpectralPeaks(spectrograms);
 
   // 4. Create enhanced constellation map
-  console.log("4. Creating enhanced constellation map with quality scoring...");
+  console.log("4. Creating enhanced constellation map with robust hashing...");
   const fingerprints = createConstellationMap(spectralPeaks);
 
   const frameCount = spectrograms[0].data.length;

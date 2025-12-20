@@ -7,6 +7,7 @@ import { IdentifyView } from "./IdentifyView";
 import { AddSongView } from "./AddSongView";
 import { ResultCard } from "./ResultCard";
 import { LibraryButton } from "./LibraryButton";
+import { HowItWorksButton } from "./HowItWorksButton";
 import { SongLibraryModal } from "./SongLibraryModal";
 import LogConsole from "./LogConsole";
 import { AlertTriangle, X } from "lucide-react";
@@ -181,31 +182,33 @@ const AudioCapture = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-gray-200 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
+    <div className="flex flex-col items-center w-full">
+      <HowItWorksButton />
       <LibraryButton
         songCount={stats.song_count}
         onClick={() => setIsLibraryOpen(true)}
       />
-      <main className="w-full max-w-md mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Apollo Music Identifier
-          </h1>
-          <p className="text-gray-400 mt-2">
-            Identify music playing around you or add a new song to our library.
-          </p>
-        </header>
 
+      <header className="text-center mb-10">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+          Apollo
+        </h1>
+        <p className="text-gray-400 text-sm sm:text-base max-w-xs mx-auto">
+          Identify music or expand the library.
+        </p>
+      </header>
+
+      <div className="w-full glass-card rounded-2xl p-6 sm:p-8 mb-8">
         <ModeToggle mode={mode} onModeChange={handleModeChange} />
 
-        <div className="mt-8 relative">
+        <div className="mt-8 relative min-h-[200px]">
           <AnimatePresence mode="wait">
             {mode === "identify" ? (
               <motion.div
                 key="identify"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
                 <IdentifyView
@@ -217,9 +220,9 @@ const AudioCapture = () => {
             ) : (
               <motion.div
                 key="add"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
                 <AddSongView
@@ -231,40 +234,36 @@ const AudioCapture = () => {
             )}
           </AnimatePresence>
         </div>
+      </div>
 
-        <div className="mt-8 w-full space-y-4">
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                layout
-                className="bg-red-900/50 border border-red-500/30 text-red-300 p-3 rounded-lg flex items-center justify-between gap-4"
+      <div className="w-full space-y-4">
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="glass border border-red-500/30 text-red-200 p-4 rounded-xl flex items-start gap-3"
+            >
+              <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">{error}</div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-200 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-red-400" />
-                  <span className="text-sm font-medium">{error}</span>
-                </div>
-                <button
-                  onClick={() => setError(null)}
-                  className="p-1 rounded-full hover:bg-red-500/20 transition-colors"
-                  aria-label="Dismiss error"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </motion.div>
-            )}
-            {result && (
-              <ResultCard result={result} mode={mode} onClear={resetState} />
-            )}
-          </AnimatePresence>
-        </div>
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          )}
+          {result && (
+            <ResultCard result={result} mode={mode} onClear={resetState} />
+          )}
+        </AnimatePresence>
+      </div>
 
-        <div className="mt-8">
-          <LogConsole />
-        </div>
-      </main>
+      <div className="mt-8 w-full">
+        <LogConsole />
+      </div>
 
       <AnimatePresence>
         {isLibraryOpen && (

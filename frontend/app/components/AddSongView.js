@@ -44,7 +44,7 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <InputField
         label="Song Name"
         value={songName}
@@ -59,8 +59,8 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
         placeholder="e.g., The Weeknd (Optional)"
       />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">
           Audio File
         </label>
         <div
@@ -69,11 +69,14 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
           onDragOver={(e) => handleDragEvents(e, true)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-300 ${
-            isDragging
-              ? "border-[#9F2BFE] bg-[#9F2BFE]/10"
-              : "border-gray-600 hover:border-gray-500 bg-gray-800/20"
-          }`}
+          className={`
+            relative flex flex-col items-center justify-center p-6 
+            border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300
+            ${isDragging
+              ? "border-primary bg-primary/10"
+              : "border-white/10 hover:border-white/20 hover:bg-white/5"
+            }
+          `}
         >
           <input
             ref={fileInputRef}
@@ -83,9 +86,11 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
             className="hidden"
           />
           {file ? (
-            <div className="flex flex-col items-center text-center">
-              <FileAudio className="w-8 h-8 text-[#9F2BFE] mb-2" />
-              <p className="text-sm font-medium text-gray-200 truncate max-w-full">
+            <div className="flex flex-col items-center text-center w-full">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+                <FileAudio className="w-6 h-6 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-white truncate max-w-full px-4">
                 {file.name}
               </p>
               <button
@@ -94,19 +99,18 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
                   e.stopPropagation();
                   setFile(null);
                 }}
-                className="mt-2 text-xs text-gray-400 hover:text-red-400 transition-colors"
+                className="mt-2 text-xs text-red-400 hover:text-red-300 transition-colors"
               >
-                Remove
+                Remove file
               </button>
             </div>
           ) : (
             <div className="flex flex-col items-center text-center text-gray-400">
-              <UploadCloud className="w-8 h-8 mb-2" />
-              <p className="font-semibold">
-                <span className="text-[#9F2BFE]">Upload a file</span> or drag
-                and drop
+              <UploadCloud className="w-8 h-8 mb-3 text-gray-500" />
+              <p className="text-sm font-medium text-gray-300">
+                Click to upload or drag and drop
               </p>
-              <p className="text-xs mt-1">MP3, WAV, OGG up to 10MB</p>
+              <p className="text-xs text-gray-500 mt-1">MP3, WAV, OGG</p>
             </div>
           )}
         </div>
@@ -115,11 +119,18 @@ export const AddSongView = ({ isProcessing, onSubmit, onError }) => {
       <motion.button
         type="submit"
         disabled={isProcessing || !file || !songName}
-        className="w-full flex justify-center items-center gap-2 bg-[#9F2BFE] text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 hover:bg-[#8A25E8] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#9F2BFE] focus-visible:ring-offset-[#121212] disabled:bg-gray-600 disabled:cursor-not-allowed"
+        className="
+          w-full flex justify-center items-center gap-2 
+          bg-primary text-white font-semibold py-3.5 px-4 rounded-xl 
+          transition-all duration-300 hover:bg-primary/90 
+          focus:outline-none focus:ring-2 focus:ring-primary/50
+          disabled:bg-white/5 disabled:text-gray-500 disabled:cursor-not-allowed
+          shadow-lg shadow-primary/20
+        "
         whileTap={{ scale: 0.98 }}
       >
         {isProcessing && <Loader2 className="w-5 h-5 animate-spin" />}
-        {isProcessing ? "Adding Song..." : "Add Song to Library"}
+        {isProcessing ? "Adding Song..." : "Add to Library"}
       </motion.button>
     </form>
   );
@@ -132,16 +143,21 @@ const InputField = ({
   placeholder,
   required = false,
 }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-300 mb-2">
-      {label} {required && <span className="text-red-400">*</span>}
+  <div className="space-y-2">
+    <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">
+      {label} {required && <span className="text-primary">*</span>}
     </label>
     <input
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-[#1e1e1e] border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9F2BFE] focus:border-[#9F2BFE] transition-colors"
+      className="
+        w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 
+        text-sm text-white placeholder-gray-500 
+        focus:outline-none focus:border-primary/50 focus:bg-white/10 
+        transition-all duration-200
+      "
       required={required}
     />
   </div>
