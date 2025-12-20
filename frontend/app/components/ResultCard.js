@@ -64,7 +64,7 @@ export const ResultCard = ({ result, mode, onClear }) => {
             No Match Found
           </h3>
           <p className="text-sm text-gray-400">
-            We couldn't identify this song. Try recording a longer clip.
+            We couldn&apos;t identify this song. Try recording a longer clip.
           </p>
         </div>
       )}
