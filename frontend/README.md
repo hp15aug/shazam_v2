@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Apollo Frontend
 
-## Getting Started
+The frontend for Apollo is a modern, responsive web application built with **Next.js 15**. It provides a sleek interface for users to record audio, view identification results, and explore the song library.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+-   **Glassmorphism Design**: A premium, dark-themed UI with translucent elements.
+-   **Interactive Animations**: Smooth transitions and micro-interactions powered by `framer-motion`.
+-   **Real-Time Log Console**: A terminal-like component that streams backend logs via Server-Sent Events (SSE).
+-   **Audio Visualization**: Visual feedback during recording.
+-   **"How It Works" Carousel**: An educational, draggable carousel explaining the underlying technology.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+-   **Framework**: Next.js 15 (App Router)
+-   **Language**: JavaScript (ES6+)
+-   **Styling**: Tailwind CSS v4
+-   **Animations**: Framer Motion
+-   **Icons**: Lucide React
+-   **Font**: Geist Sans & Mono
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Getting Started
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+-   Node.js (v18+)
+-   npm or yarn
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1.  Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
 
-## Deploy on Vercel
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3.  Run the development server:
+    ```bash
+    npm run dev
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4.  Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+## 🧱 Key Components
+
+-   **`AudioCapture.js`**: The core component handling microphone access, recording, and API communication.
+-   **`LogConsole.js`**: Connects to the backend SSE stream to display real-time processing logs with syntax highlighting.
+-   **`HowItWorksButton.js`**: Navigates to the educational carousel page.
+-   **`ResultCard.js`**: Displays the identified song details with a confidence score.
+
+## 🎨 Design System
+
+The application uses a custom dark theme defined in `globals.css`. Key design tokens include:
+
+-   **Background**: Deep black/gray (`#0a0a0a`, `#121212`)
+-   **Accents**: Gradients of White to Gray for text, and subtle primary colors for actions.
+-   **Glass Effect**: `backdrop-blur` utilities combined with semi-transparent backgrounds.
+
+---
+
+Part of the **Apollo Music Identifier** project.
